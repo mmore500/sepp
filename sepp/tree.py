@@ -256,12 +256,8 @@ for l2 in sys.stdin.readlines():
 
         nr.edge.length = None
         nr.parent_node = None
-        try:
-            nr._convert_node_to_root_polytomy()
-        except AttributeError:
-            from dendropy.datamodel.treemodel import \
-                _convert_node_to_root_polytomy
-            _convert_node_to_root_polytomy(nr)
+        _convert_node_to_root_polytomy(t, nr)
+
         t1 = PhylogeneticTree(Tree(seed_node=nr))
         # temp we could speed this up,
         # by telling the Phylogenetic tree how many leaves it has
@@ -454,3 +450,25 @@ def is_valid_tree(t):
         # Bug?  NN
         assert ((not rc[0].child_nodes()) and (not rc[0].child_nodes()))
     return True
+
+def _convert_node_to_root_polytomy(t, nr):
+    # helper for compat across dendropy versions
+    try:  # dendropy >= 5.0.3
+        t.polytomize_root()
+        return
+    except AttributeError:
+        pass
+
+    try:
+        nr._convert_node_to_root_polytomy()
+        return
+    except AttributeError:
+        pass
+
+    try:  # dendropy < 4.6
+        from dendropy.datamodel.treemodel import \
+            _convert_node_to_root_polytomy
+        _convert_node_to_root_polytomy(nr)
+        return
+    except ImportError as e:
+        raise e
